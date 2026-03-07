@@ -4,7 +4,7 @@ import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, delet
 
 const CLOUDINARY_CLOUD = “dxxlptkzf”;
 const CLOUDINARY_PRESET = “chore_app”;
-const MASTER_PIN = null; // Dad’s PIN (pins.dad) is the only master — set via PIN management
+const MASTER_PIN = null; // Dad’s PIN (pins.dad) is the only master
 
 const firebaseConfig = {
 apiKey: “AIzaSyCXvGhkfl3f3CXvsuuRiPUmK7J4GTsFan8”,
@@ -18,7 +18,7 @@ appId: “1:1029486053333:web:d9bfbc910c07979fdb9f5c”
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
-// ── UTILS ──────────────────────────────────────────────────────────────────
+// – UTILS –
 const resizeImage = (dataUrl, maxW = 800) =>
 new Promise(res => {
 const img = new Image();
@@ -90,32 +90,23 @@ const d = new Date(ts);
 return d.toLocaleDateString(“en-US”, { month: “short”, day: “numeric”, hour: “numeric”, minute: “2-digit” });
 };
 
-// ── GLOBAL STYLES ──────────────────────────────────────────────────────────
+// – GLOBAL STYLES –
 const GlobalStyles = () => (
 
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&family=DM+Serif+Display&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%; max-width: 100vw; overflow-x: hidden;
-      background: #0a0a0a;
-    }
+    html, body { width: 100%; max-width: 100vw; overflow-x: hidden; background: #0a0a0a; }
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
-
     @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
     @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
     @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
     @keyframes scaleIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
-    @keyframes sparkle { 0%,100%{opacity:0;transform:scale(0)} 50%{opacity:1;transform:scale(1)} }
     @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
     @keyframes slideIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
-    @keyframes slideInRight { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:translateX(0)} }
     @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
-    @keyframes pinPop { 0%{transform:scale(1)} 50%{transform:scale(1.4)} 100%{transform:scale(1)} }
-    @keyframes successPulse { 0%{box-shadow:0 0 0 0 rgba(52,211,153,0.4)} 70%{box-shadow:0 0 0 12px rgba(52,211,153,0)} 100%{box-shadow:0 0 0 0 rgba(52,211,153,0)} }
-
     .float { animation: float 4s ease-in-out infinite; }
     .fade-up { animation: fadeUp 0.4s ease forwards; }
     .fade-in { animation: fadeIn 0.3s ease forwards; }
@@ -138,58 +129,43 @@ const GlobalStyles = () => (
     .btn { transition: all 0.2s; cursor: pointer; }
     .btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
     .btn:active { transform: scale(0.97) translateY(0); filter: brightness(0.95); }
-    .pin-dot-filled { animation: pinPop 0.15s ease; }
     .card-hover { transition: all 0.2s; }
     .card-hover:hover { transform: translateY(-2px); filter: brightness(1.06); }
   `}</style>
 
 );
 
-// ── SMART PIN PAD ──────────────────────────────────────────────────────────
+// – SMART PIN PAD –
 const SmartPinPad = ({ onSuccess, correctPin, onBack, accentColor, masterPin, setupMode, onFourDigits }) => {
 const [input, setInput] = useState(””);
 const [shaking, setShaking] = useState(false);
-const [filledDots, setFilledDots] = useState([]);
 
 const press = d => {
 if (input.length >= 4) return;
 const next = input + d;
 setInput(next);
-setFilledDots(prev => […prev, next.length - 1]);
-
-```
 if (next.length === 4) {
-  if (setupMode) {
-    setTimeout(() => {
-      onFourDigits && onFourDigits(next);
-      setInput("");
-      setFilledDots([]);
-    }, 150);
-    return;
-  }
-  const isCorrect = next === correctPin || (masterPin && next === masterPin);
-  if (isCorrect) {
-    setTimeout(() => onSuccess(next === masterPin ? "master" : "own"), 150);
-  } else {
-    setShaking(true);
-    setTimeout(() => { setInput(""); setFilledDots([]); setShaking(false); }, 500);
-  }
+if (setupMode) {
+setTimeout(() => {
+onFourDigits && onFourDigits(next);
+setInput(””);
+}, 150);
+return;
 }
-```
-
+const isCorrect = next === correctPin || (masterPin && next === masterPin);
+if (isCorrect) {
+setTimeout(() => onSuccess(next === masterPin ? “master” : “own”), 150);
+} else {
+setShaking(true);
+setTimeout(() => { setInput(””); setShaking(false); }, 500);
+}
+}
 };
 
-const backspace = () => {
-setInput(p => {
-const next = p.slice(0, -1);
-setFilledDots(prev => prev.filter(i => i < next.length));
-return next;
-});
-};
+const backspace = () => setInput(p => p.slice(0, -1));
 
 return (
 <div style={{ display: “flex”, flexDirection: “column”, alignItems: “center”, gap: 24 }}>
-{/* Dots */}
 <div className={shaking ? “shake” : “”} style={{ display: “flex”, gap: 16 }}>
 {[0,1,2,3].map(i => (
 <div key={i} style={{
@@ -202,55 +178,45 @@ boxShadow: i < input.length ? `0 0 8px ${accentColor}55` : “none”,
 }} />
 ))}
 </div>
-
-```
-  {/* Keys */}
-  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-    {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d, i) => (
-      <button key={i} className={d !== "" ? "btn" : ""}
-        onClick={() => d === "⌫" ? backspace() : d !== "" && press(String(d))}
-        style={{
-          width: 68, height: 68, borderRadius: 16,
-          background: d === "" ? "transparent" : "rgba(255,255,255,0.06)",
-          border: d === "" ? "none" : "1px solid rgba(255,255,255,0.1)",
-          color: "#fff", fontSize: d === "⌫" ? 18 : 22,
-          fontFamily: "'DM Sans', sans-serif",
-          fontWeight: d === "⌫" ? 300 : 400,
-          cursor: d === "" ? "default" : "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}
-      >{d}</button>
-    ))}
-  </div>
-
-  {onBack && (
-    <button onClick={onBack} style={{
-      background: "none", border: "none", color: "rgba(255,255,255,0.3)",
-      fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
-      padding: "4px 8px", borderRadius: 8,
-      transition: "color 0.2s",
-    }}
-      onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.6)"}
-      onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.3)"}
-    >← Back</button>
-  )}
+<div style={{ display: “grid”, gridTemplateColumns: “repeat(3, 1fr)”, gap: 10 }}>
+{[1,2,3,4,5,6,7,8,9,””,0,“del”].map((d, i) => (
+<button key={i} className={d !== “” ? “btn” : “”}
+onClick={() => d === “del” ? backspace() : d !== “” && press(String(d))}
+style={{
+width: 68, height: 68, borderRadius: 16,
+background: d === “” ? “transparent” : “rgba(255,255,255,0.06)”,
+border: d === “” ? “none” : “1px solid rgba(255,255,255,0.1)”,
+color: “#fff”, fontSize: d === “del” ? 14 : 22,
+fontFamily: “‘DM Sans’, sans-serif”,
+fontWeight: 400,
+cursor: d === “” ? “default” : “pointer”,
+display: “flex”, alignItems: “center”, justifyContent: “center”,
+}}
+>{d === “del” ? “DEL” : d}</button>
+))}
 </div>
-```
-
+{onBack && (
+<button onClick={onBack} style={{
+background: “none”, border: “none”, color: “rgba(255,255,255,0.3)”,
+fontFamily: “‘DM Sans’, sans-serif”, fontSize: 13, cursor: “pointer”,
+padding: “4px 8px”, borderRadius: 8, transition: “color 0.2s”,
+}}>Back</button>
+)}
+</div>
 );
 };
 
-// ── LOGIN SCREEN ───────────────────────────────────────────────────────────
+// – LOGIN SCREEN –
 const LoginScreen = ({ onLogin, pins, setPins }) => {
 const [selected, setSelected] = useState(null);
-const [setupStage, setSetupStage] = useState(null); // null | ‘set’ | ‘confirm’
+const [setupStage, setSetupStage] = useState(null);
 const [firstPin, setFirstPin] = useState(””);
 const [pinError, setPinError] = useState(false);
 
 const profiles = [
-{ id: “dad”, name: “Dad”, emoji: “👨”, card: “rgba(200,160,80,0.07)”, border: “rgba(200,160,80,0.35)”, accent: “#c9a96e”, label: “PARENT”, font: “‘DM Serif Display’, serif” },
-{ id: “alan”, name: “Alan”, emoji: “🧑”, card: “rgba(255,255,255,0.04)”, border: “rgba(255,255,255,0.12)”, accent: “#e0e0e0”, label: “18”, font: “‘DM Sans’, sans-serif” },
-{ id: “zelda”, name: “Zelda”, emoji: “🧚”, card: “rgba(167,139,250,0.08)”, border: “rgba(167,139,250,0.35)”, accent: “#a78bfa”, label: “✨”, font: “‘Cinzel Decorative’, cursive” },
+{ id: “dad”, name: “Dad”, emoji: “\uD83D\uDC68”, card: “rgba(200,160,80,0.07)”, border: “rgba(200,160,80,0.35)”, accent: “#c9a96e”, label: “PARENT”, font: “‘DM Serif Display’, serif” },
+{ id: “alan”, name: “Alan”, emoji: “\uD83E\uDDD1”, card: “rgba(255,255,255,0.04)”, border: “rgba(255,255,255,0.12)”, accent: “#e0e0e0”, label: “18”, font: “‘DM Sans’, sans-serif” },
+{ id: “zelda”, name: “Zelda”, emoji: “\uD83E\uDDDA”, card: “rgba(167,139,250,0.08)”, border: “rgba(167,139,250,0.35)”, accent: “#a78bfa”, label: “sparkle”, font: “‘Cinzel Decorative’, cursive” },
 ];
 
 const p = profiles.find(x => x.id === selected);
@@ -258,13 +224,7 @@ const needsSetup = selected && !pins[selected];
 
 const handleLoginSuccess = () => onLogin(selected);
 
-// PIN Setup flow
-const handleSetupFirst = (pin) => {
-setFirstPin(pin);
-setSetupStage(“confirm”);
-setPinError(false);
-};
-
+const handleSetupFirst = (pin) => { setFirstPin(pin); setSetupStage(“confirm”); setPinError(false); };
 const handleSetupConfirm = async (pin) => {
 if (pin === firstPin) {
 const newPins = { …pins, [selected]: pin };
@@ -273,11 +233,7 @@ setPins(newPins);
 onLogin(selected);
 } else {
 setPinError(true);
-setTimeout(() => {
-setSetupStage(“set”);
-setFirstPin(””);
-setPinError(false);
-}, 600);
+setTimeout(() => { setSetupStage(“set”); setFirstPin(””); setPinError(false); }, 600);
 }
 };
 
@@ -289,94 +245,69 @@ display: “flex”, flexDirection: “column”, alignItems: “center”, just
 padding: “24px 16px”, fontFamily: “‘DM Sans’, sans-serif”, position: “relative”,
 }}>
 <GlobalStyles />
+{[…Array(24)].map((_, i) => (
+<div key={i} style={{
+position: “fixed”, borderRadius: “50%”, background: “#fff”, pointerEvents: “none”,
+left: `${5 + (i * 4.7) % 90}%`, top: `${5 + (i * 7.3) % 90}%`,
+width: (i % 3) + 1, height: (i % 3) + 1,
+opacity: 0.08 + (i % 4) * 0.06,
+animation: `pulse ${2 + (i % 3)}s ease-in-out ${(i % 4) * 0.5}s infinite`,
+}} />
+))}
 
 ```
-  {/* Stars */}
-  {[...Array(24)].map((_, i) => (
-    <div key={i} style={{
-      position: "fixed", borderRadius: "50%", background: "#fff", pointerEvents: "none",
-      left: `${5 + (i * 4.7) % 90}%`, top: `${5 + (i * 7.3) % 90}%`,
-      width: (i % 3) + 1, height: (i % 3) + 1,
-      opacity: 0.08 + (i % 4) * 0.06,
-      animation: `pulse ${2 + (i % 3)}s ease-in-out ${(i % 4) * 0.5}s infinite`,
-    }} />
-  ))}
-
   {!selected ? (
     <div className="fade-up" style={{ width: "100%", maxWidth: 460 }}>
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <div style={{ fontSize: 10, letterSpacing: 6, color: "rgba(255,255,255,0.25)", marginBottom: 12 }}>FAMILY CHORES</div>
         <div className="shimmer-text" style={{ fontFamily: "'DM Serif Display', serif", fontSize: 38 }}>Who's there?</div>
       </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, width: "100%" }}>
         {profiles.map((profile, i) => (
-          <div key={profile.id}
-            className="btn card-hover"
+          <div key={profile.id} className="btn card-hover"
             onClick={() => { setSelected(profile.id); setSetupStage(null); setFirstPin(""); setPinError(false); }}
             style={{
-              background: profile.card,
-              border: `1px solid ${profile.border}`,
+              background: profile.card, border: `1px solid ${profile.border}`,
               borderRadius: 22, padding: "26px 12px",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
-              animation: `fadeUp 0.45s ease ${i * 0.1}s both`,
-              minWidth: 0,
+              animation: `fadeUp 0.45s ease ${i * 0.1}s both`, minWidth: 0,
             }}>
             <div style={{ fontSize: 42 }} className={profile.id === "zelda" ? "float" : ""}>{profile.emoji}</div>
             <div style={{
-              fontFamily: profile.font,
-              fontSize: profile.id === "zelda" ? 12 : 18,
-              color: profile.accent,
-              textAlign: "center",
-              wordBreak: "break-word",
+              fontFamily: profile.font, fontSize: profile.id === "zelda" ? 12 : 18,
+              color: profile.accent, textAlign: "center", wordBreak: "break-word",
               letterSpacing: profile.id === "alan" ? 2 : 0,
-            }}>
-              {profile.name}
-            </div>
+            }}>{profile.name}</div>
             <div style={{
               fontSize: 9, color: "rgba(255,255,255,0.25)",
               border: `1px solid ${profile.border}`,
               borderRadius: 99, padding: "3px 10px", letterSpacing: 1,
-            }}>
-              {profile.label}
-            </div>
+            }}>{profile.label}</div>
           </div>
         ))}
       </div>
     </div>
   ) : (
     <div className="scale-in" style={{
-      background: "rgba(255,255,255,0.03)",
-      border: `1px solid ${p.border}`,
+      background: "rgba(255,255,255,0.03)", border: `1px solid ${p.border}`,
       borderRadius: 28, padding: "36px 32px",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 20,
-      width: "100%", maxWidth: 330,
-      boxShadow: `0 0 60px ${p.accent}18`,
+      width: "100%", maxWidth: 330, boxShadow: `0 0 60px ${p.accent}18`,
     }}>
       <div style={{ fontSize: 48 }} className={p.id === "zelda" ? "float" : ""}>{p.emoji}</div>
       <div style={{ fontFamily: p.font, fontSize: p.id === "zelda" ? 14 : 22, color: p.accent }}>{p.name}</div>
-
       {needsSetup ? (
         <>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: 2 }}>
               {setupStage === "confirm" ? "CONFIRM YOUR PIN" : "CREATE YOUR PIN"}
             </div>
-            {pinError && (
-              <div className="fade-in" style={{ fontSize: 12, color: "#f87171", marginTop: 6 }}>
-                PINs didn't match — try again
-              </div>
-            )}
-            {!pinError && setupStage === "confirm" && (
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Enter it again to confirm</div>
-            )}
-            {!pinError && !setupStage && (
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Choose a 4-digit PIN</div>
-            )}
+            {pinError && <div className="fade-in" style={{ fontSize: 12, color: "#f87171", marginTop: 6 }}>PINs didn't match -- try again</div>}
+            {!pinError && setupStage === "confirm" && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Enter it again to confirm</div>}
+            {!pinError && !setupStage && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Choose a 4-digit PIN</div>}
           </div>
           <SmartPinPad
-            setupMode={true}
-            accentColor={p.accent}
+            setupMode={true} accentColor={p.accent}
             onFourDigits={setupStage === "confirm" ? handleSetupConfirm : handleSetupFirst}
             onBack={() => setSelected(null)}
           />
@@ -401,7 +332,7 @@ padding: “24px 16px”, fontFamily: “‘DM Sans’, sans-serif”, position:
 );
 };
 
-// ── HISTORY MODAL ──────────────────────────────────────────────────────────
+// – HISTORY MODAL –
 const HistoryModal = ({ kid, accentColor, onClose }) => {
 const [history, setHistory] = useState([]);
 const [loading, setLoading] = useState(true);
@@ -426,60 +357,45 @@ backdropFilter: “blur(6px)”,
 <div className=“scale-in” style={{
 background: “#111”, border: `1px solid ${accentColor}30`,
 borderRadius: “24px 24px 0 0”, width: “100%”, maxWidth: 520,
-maxHeight: “80vh”, overflow: “hidden”,
-display: “flex”, flexDirection: “column”,
-boxShadow: `0 -20px 60px rgba(0,0,0,0.5)`,
+maxHeight: “80vh”, overflow: “hidden”, display: “flex”, flexDirection: “column”,
+boxShadow: “0 -20px 60px rgba(0,0,0,0.5)”,
 }} onClick={e => e.stopPropagation()}>
-{/* Handle */}
 <div style={{ display: “flex”, justifyContent: “center”, padding: “12px 0 0” }}>
 <div style={{ width: 36, height: 4, borderRadius: 99, background: “rgba(255,255,255,0.15)” }} />
 </div>
-
-```
-    <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <div>
-        <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 18, color: "#fff" }}>Chore History</div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginTop: 2 }}>
-          {history.length} completed · ${total.toFixed(2)} earned total
-        </div>
-      </div>
-      <button onClick={onClose} style={{ background: "rgba(255,255,255,0.07)", border: "none", color: "rgba(255,255,255,0.5)", width: 32, height: 32, borderRadius: 99, cursor: "pointer", fontSize: 16 }}>✕</button>
-    </div>
-
-    <div style={{ overflowY: "auto", flex: 1, padding: "12px 20px 24px" }}>
-      {loading && <div style={{ color: "rgba(255,255,255,0.2)", textAlign: "center", padding: 30, fontSize: 13 }}>Loading...</div>}
-      {!loading && history.length === 0 && (
-        <div style={{ color: "rgba(255,255,255,0.2)", textAlign: "center", padding: 40, fontSize: 13, fontStyle: "italic" }}>
-          No completed chores yet
-        </div>
-      )}
-      {history.map((item, i) => (
-        <div key={item.id} style={{
-          display: "flex", alignItems: "center", gap: 14,
-          padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.04)",
-          animation: `slideIn 0.3s ease ${i * 0.04}s both`,
-        }}>
-          {item.photo && (
-            <img src={item.photo} style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 10, flexShrink: 0, opacity: 0.85 }} />
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, color: "#e0e0e0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.choreName}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>{formatDate(item.approvedAt)}</div>
-          </div>
-          <div style={{ color: accentColor, fontFamily: "'DM Serif Display', serif", fontSize: 16, flexShrink: 0 }}>
-            +${item.value?.toFixed(2)}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
+<div style={{ padding: “16px 20px”, display: “flex”, alignItems: “center”, justifyContent: “space-between”, borderBottom: “1px solid rgba(255,255,255,0.06)” }}>
+<div>
+<div style={{ fontFamily: “‘DM Serif Display’, serif”, fontSize: 18, color: “#fff” }}>Chore History</div>
+<div style={{ fontSize: 11, color: “rgba(255,255,255,0.35)”, letterSpacing: 1, marginTop: 2 }}>
+{history.length} completed – ${total.toFixed(2)} earned total
 </div>
-```
-
+</div>
+<button onClick={onClose} style={{ background: “rgba(255,255,255,0.07)”, border: “none”, color: “rgba(255,255,255,0.5)”, width: 32, height: 32, borderRadius: 99, cursor: “pointer”, fontSize: 16 }}>x</button>
+</div>
+<div style={{ overflowY: “auto”, flex: 1, padding: “12px 20px 24px” }}>
+{loading && <div style={{ color: “rgba(255,255,255,0.2)”, textAlign: “center”, padding: 30, fontSize: 13 }}>Loading…</div>}
+{!loading && history.length === 0 && <div style={{ color: “rgba(255,255,255,0.2)”, textAlign: “center”, padding: 40, fontSize: 13, fontStyle: “italic” }}>No completed chores yet</div>}
+{history.map((item, i) => (
+<div key={item.id} style={{
+display: “flex”, alignItems: “center”, gap: 14,
+padding: “12px 0”, borderBottom: “1px solid rgba(255,255,255,0.04)”,
+animation: `slideIn 0.3s ease ${i * 0.04}s both`,
+}}>
+{item.photo && <img src={item.photo} style={{ width: 44, height: 44, objectFit: “cover”, borderRadius: 10, flexShrink: 0, opacity: 0.85 }} />}
+<div style={{ flex: 1, minWidth: 0 }}>
+<div style={{ fontSize: 14, color: “#e0e0e0”, overflow: “hidden”, textOverflow: “ellipsis”, whiteSpace: “nowrap” }}>{item.choreName}</div>
+<div style={{ fontSize: 11, color: “rgba(255,255,255,0.3)”, marginTop: 2 }}>{formatDate(item.approvedAt)}</div>
+</div>
+<div style={{ color: accentColor, fontFamily: “‘DM Serif Display’, serif”, fontSize: 16, flexShrink: 0 }}>+${item.value?.toFixed(2)}</div>
+</div>
+))}
+</div>
+</div>
+</div>
 );
 };
 
-// ── DAD DASHBOARD ──────────────────────────────────────────────────────────
+// – DAD DASHBOARD –
 const DadDashboard = ({ onLogout, pins, setPins }) => {
 const [tab, setTab] = useState(“queue”);
 const [queue, setQueue] = useState([]);
@@ -494,7 +410,7 @@ const [resetTarget, setResetTarget] = useState(null);
 const [newPinStage, setNewPinStage] = useState(null);
 const [newPinFirst, setNewPinFirst] = useState(””);
 const [pinResetError, setPinResetError] = useState(false);
-const [showHistory, setShowHistory] = useState(null); // “alan” | “zelda” | null
+const [showHistory, setShowHistory] = useState(null);
 const [approvingId, setApprovingId] = useState(null);
 
 useEffect(() => {
@@ -503,11 +419,9 @@ unsubs.push(onSnapshot(collection(db, “queue”), snap => setQueue(snap.docs.m
 unsubs.push(onSnapshot(doc(db, “balances”, “main”), snap => { if (snap.exists()) setBalances(snap.data()); }));
 unsubs.push(onSnapshot(collection(db, “bills”), snap => setBills(snap.docs.map(d => ({ id: d.id, …d.data() })))));
 [“alan”, “zelda”].forEach(kid => {
-unsubs.push(
-onSnapshot(collection(db, `chores_${kid}`), snap => {
+unsubs.push(onSnapshot(collection(db, `chores_${kid}`), snap => {
 setChores(prev => ({ …prev, [kid]: snap.docs.map(d => ({ id: d.id, …d.data() })) }));
-})
-);
+}));
 });
 return () => unsubs.forEach(u => u && u());
 }, []);
@@ -518,12 +432,9 @@ try {
 const newBal = { …balances, [item.kid]: (balances[item.kid] || 0) + (item.value || 0) };
 await setDoc(doc(db, “balances”, “main”), newBal);
 await updateDoc(doc(db, `chores_${item.kid}`, item.choreId), { done: true });
-// Save to history
 await addDoc(collection(db, `history_${item.kid}`), {
-choreName: item.choreName,
-value: item.value,
-photo: item.photo || null,
-refPhoto: item.refPhoto || null,
+choreName: item.choreName, value: item.value,
+photo: item.photo || null, refPhoto: item.refPhoto || null,
 approvedAt: Date.now(),
 });
 await deleteDoc(doc(db, “queue”, item.id));
@@ -577,7 +488,6 @@ setTimeout(() => { setNewPinStage(“set”); setNewPinFirst(””); setPinRese
 };
 
 const totalBills = bills.reduce((s, b) => s + b.amount, 0);
-
 const inputStyle = {
 background: “rgba(255,255,255,0.05)”, border: “1px solid rgba(255,255,255,0.1)”,
 color: “#fff”, padding: “10px 14px”, borderRadius: 10, fontSize: 14, outline: “none”,
@@ -590,20 +500,19 @@ return (
 {showHistory && <HistoryModal kid={showHistory} accentColor={showHistory === “zelda” ? “#a78bfa” : “#c9a96e”} onClose={() => setShowHistory(null)} />}
 
 ```
-  {/* Header */}
   <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(200,160,80,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,0,0,0.35)", backdropFilter: "blur(10px)", position: "sticky", top: 0, zIndex: 50 }}>
     <div>
       <div className="shimmer-text" style={{ fontFamily: "'DM Serif Display', serif", fontSize: 20 }}>Dad's Dashboard</div>
       <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", letterSpacing: 1 }}>FAMILY CHORE MANAGER</div>
     </div>
     <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-      <div onClick={() => setShowHistory("zelda")} style={{ textAlign: "right", cursor: "pointer" }}
+      <div onClick={() => setShowHistory("zelda")} style={{ textAlign: "right", cursor: "pointer", opacity: 1, transition: "opacity 0.2s" }}
         onMouseEnter={e => e.currentTarget.style.opacity = "0.7"}
         onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
         <div style={{ fontSize: 9, color: "#a78bfa", letterSpacing: 1 }}>ZELDA</div>
         <div style={{ color: "#a78bfa", fontFamily: "'DM Serif Display', serif", fontSize: 16 }}>${(balances.zelda||0).toFixed(2)}</div>
       </div>
-      <div onClick={() => setShowHistory("alan")} style={{ textAlign: "right", cursor: "pointer" }}
+      <div onClick={() => setShowHistory("alan")} style={{ textAlign: "right", cursor: "pointer", opacity: 1, transition: "opacity 0.2s" }}
         onMouseEnter={e => e.currentTarget.style.opacity = "0.7"}
         onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
         <div style={{ fontSize: 9, color: "#c9a96e", letterSpacing: 1 }}>ALAN</div>
@@ -613,7 +522,6 @@ return (
     </div>
   </div>
 
-  {/* Tabs */}
   <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.05)", overflowX: "auto", background: "rgba(0,0,0,0.2)" }}>
     {[{id:"queue",label:"Queue",count:queue.length},{id:"chores",label:"Chores"},{id:"bills",label:"Bills"},{id:"pins",label:"PINs"}].map(t => (
       <button key={t.id} onClick={() => setTab(t.id)} className="btn" style={{
@@ -631,18 +539,17 @@ return (
 
   <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto" }}>
 
-    {/* QUEUE */}
     {tab === "queue" && (
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {queue.length === 0 && (
           <div style={{ padding: 50, textAlign: "center", color: "rgba(255,255,255,0.15)", border: "1px dashed rgba(255,255,255,0.07)", borderRadius: 18 }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>✓</div>
-            <div style={{ fontSize: 13 }}>All clear — no pending submissions</div>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>&#10003;</div>
+            <div style={{ fontSize: 13 }}>All clear -- no pending submissions</div>
           </div>
         )}
         {queue.map(item => (
-          <div key={item.id} className="fade-in" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 16, transition: "opacity 0.3s", opacity: approvingId === item.id ? 0.5 : 1 }}>
-            <div style={{ fontSize: 10, color: item.kid === "zelda" ? "#a78bfa" : "#c9a96e", letterSpacing: 2, marginBottom: 10 }}>{item.kid?.toUpperCase()} — {item.choreName}</div>
+          <div key={item.id} className="fade-in" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 16, opacity: approvingId === item.id ? 0.5 : 1, transition: "opacity 0.3s" }}>
+            <div style={{ fontSize: 10, color: item.kid === "zelda" ? "#a78bfa" : "#c9a96e", letterSpacing: 2, marginBottom: 10 }}>{item.kid?.toUpperCase()} -- {item.choreName}</div>
             <div style={{ display: "flex", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
               {item.refPhoto && (
                 <div>
@@ -662,16 +569,15 @@ return (
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button className="btn" onClick={() => approveItem(item)} disabled={approvingId === item.id} style={{ flex: 1, background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399", padding: "10px", borderRadius: 11, cursor: "pointer", fontSize: 13 }}>
-                {approvingId === item.id ? "..." : "✓ Approve"}
+                {approvingId === item.id ? "..." : "Approve"}
               </button>
-              <button className="btn" onClick={() => rejectItem(item)} style={{ flex: 1, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", padding: "10px", borderRadius: 11, cursor: "pointer", fontSize: 13 }}>✕ Reject</button>
+              <button className="btn" onClick={() => rejectItem(item)} style={{ flex: 1, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", padding: "10px", borderRadius: 11, cursor: "pointer", fontSize: 13 }}>Reject</button>
             </div>
           </div>
         ))}
       </div>
     )}
 
-    {/* CHORES */}
     {tab === "chores" && (
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 16 }}>
@@ -684,7 +590,7 @@ return (
             <input placeholder="Chore name" value={choreForm.name} onChange={e => setChoreForm(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
             <input placeholder="$ value" type="number" value={choreForm.value} onChange={e => setChoreForm(p => ({ ...p, value: e.target.value }))} style={inputStyle} />
             <label style={{ ...inputStyle, cursor: "pointer", color: refPhotoPreview ? "#34d399" : "rgba(255,255,255,0.35)" }}>
-              {refPhotoPreview ? "📷 Reference photo set ✓" : "📷 Upload reference photo (optional)"}
+              {refPhotoPreview ? "Photo set" : "Upload reference photo (optional)"}
               <input type="file" accept="image/*" onChange={handleRefPhoto} style={{ display: "none" }} />
             </label>
             {refPhotoPreview && <img src={refPhotoPreview} style={{ width: 80, height: 60, objectFit: "cover", borderRadius: 8 }} />}
@@ -693,14 +599,11 @@ return (
             </button>
           </div>
         </div>
-
         {["zelda","alan"].map(kid => (
           <div key={kid}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <div style={{ fontSize: 11, color: kid === "zelda" ? "#a78bfa" : "#c9a96e", letterSpacing: 2 }}>{kid.toUpperCase()}'S CHORES</div>
-              <button onClick={() => setShowHistory(kid)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.25)", fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
-                HISTORY →
-              </button>
+              <button onClick={() => setShowHistory(kid)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.25)", fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>HISTORY</button>
             </div>
             {chores[kid].length === 0 && <div style={{ color: "rgba(255,255,255,0.15)", fontSize: 13, fontStyle: "italic" }}>None yet</div>}
             {chores[kid].map(chore => (
@@ -711,7 +614,7 @@ return (
                   <div style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>${chore.value?.toFixed(2)}</div>
                 </div>
                 {chore.done && <div style={{ fontSize: 11, color: "#34d399", letterSpacing: 1, flexShrink: 0 }}>DONE</div>}
-                <button onClick={() => deleteChore(kid, chore.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.18)", cursor: "pointer", fontSize: 16, flexShrink: 0, padding: "4px 6px" }}>✕</button>
+                <button onClick={() => deleteChore(kid, chore.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.18)", cursor: "pointer", fontSize: 16, flexShrink: 0, padding: "4px 6px" }}>x</button>
               </div>
             ))}
           </div>
@@ -719,7 +622,6 @@ return (
       </div>
     )}
 
-    {/* BILLS */}
     {tab === "bills" && (
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 16 }}>
@@ -735,7 +637,7 @@ return (
             <span style={{ color: "rgba(255,255,255,0.65)" }}>{bill.name}</span>
             <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
               <span style={{ color: "#c9a96e", fontFamily: "'DM Serif Display', serif" }}>${bill.amount?.toFixed(2)}</span>
-              <button onClick={() => deleteBill(bill.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.18)", cursor: "pointer" }}>✕</button>
+              <button onClick={() => deleteBill(bill.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.18)", cursor: "pointer" }}>x</button>
             </div>
           </div>
         ))}
@@ -748,7 +650,6 @@ return (
       </div>
     )}
 
-    {/* PINS */}
     {tab === "pins" && (
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 2, marginBottom: 4 }}>MANAGE PINS</div>
@@ -758,11 +659,10 @@ return (
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
                 {newPinStage === "confirm" ? "Confirm new PIN" : `Set new PIN for ${resetTarget}`}
               </div>
-              {pinResetError && <div className="fade-in" style={{ fontSize: 12, color: "#f87171", marginTop: 6 }}>PINs didn't match — try again</div>}
+              {pinResetError && <div className="fade-in" style={{ fontSize: 12, color: "#f87171", marginTop: 6 }}>PINs didn't match -- try again</div>}
             </div>
             <SmartPinPad
-              setupMode={true}
-              accentColor="#c9a96e"
+              setupMode={true} accentColor="#c9a96e"
               onFourDigits={newPinStage === "confirm" ? handleResetConfirm : handleResetFirst}
               onBack={() => { setResetTarget(null); setNewPinStage(null); }}
             />
@@ -773,11 +673,9 @@ return (
               <div>
                 <div style={{ fontSize: 14, color: "#fff", textTransform: "capitalize" }}>{kid}</div>
                 <div style={{ fontSize: 12, color: pins[kid] ? "rgba(52,211,153,0.6)" : "rgba(255,255,255,0.25)", marginTop: 2 }}>
-                  {pins[kid] ? "✓ PIN set" : "No PIN set yet"}
+                  {pins[kid] ? "PIN set" : "No PIN set yet"}
                 </div>
-                {kid === "dad" && (
-                  <div style={{ fontSize: 11, color: "rgba(200,160,80,0.5)", marginTop: 2 }}>Unlocks all accounts</div>
-                )}
+                {kid === "dad" && <div style={{ fontSize: 11, color: "rgba(200,160,80,0.5)", marginTop: 2 }}>Unlocks all accounts</div>}
               </div>
               <button className="btn" onClick={() => startPinReset(kid)} style={{ background: "rgba(200,160,80,0.1)", border: "1px solid rgba(200,160,80,0.25)", color: "#c9a96e", padding: "7px 14px", borderRadius: 9, cursor: "pointer", fontSize: 12 }}>
                 Reset PIN
@@ -794,7 +692,7 @@ return (
 );
 };
 
-// ── ZELDA’S WORLD ──────────────────────────────────────────────────────────
+// – ZELDA’S WORLD –
 const ZeldaWorld = ({ onLogout }) => {
 const [tab, setTab] = useState(“chores”);
 const [chores, setChores] = useState([]);
@@ -859,7 +757,6 @@ return (
 {showHistory && <HistoryModal kid=“zelda” accentColor=”#a78bfa” onClose={() => setShowHistory(false)} />}
 
 ```
-  {/* Bg stars */}
   {[...Array(25)].map((_,i) => (
     <div key={i} style={{ position: "fixed", pointerEvents: "none", borderRadius: "50%",
       left: `${(i*13)%95}%`, top: `${(i*17)%95}%`,
@@ -870,21 +767,19 @@ return (
     }} />
   ))}
 
-  {/* Header */}
   <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10, background: "rgba(13,1,24,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(167,139,250,0.1)" }}>
     <div>
       <div className="zelda-shimmer" style={{ fontFamily: "'Cinzel Decorative', cursive", fontSize: 16 }}>Zelda's Realm</div>
-      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>✨ magical chore keeper</div>
+      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>magical chore keeper</div>
     </div>
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       <div style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 99, padding: "5px 14px", fontFamily: "'Cinzel Decorative', cursive", fontSize: 13, color: "#a78bfa" }}>
-        💜 ${balance.toFixed(2)}
+        ${balance.toFixed(2)}
       </div>
       <button onClick={onLogout} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.3)", padding: "5px 12px", borderRadius: 9, cursor: "pointer", fontSize: 12 }}>exit</button>
     </div>
   </div>
 
-  {/* Stats strip */}
   <div style={{ display: "flex", gap: 0, borderBottom: "1px solid rgba(167,139,250,0.1)" }}>
     {[
       { label: "Quests Left", val: pending, color: "#e879f9" },
@@ -898,7 +793,6 @@ return (
     ))}
   </div>
 
-  {/* Tabs */}
   <div style={{ display: "flex", justifyContent: "center", gap: 8, padding: "16px 20px", position: "relative", zIndex: 10 }}>
     {["chores","wishlist","history"].map(t => (
       <button key={t} className="btn" onClick={() => t === "history" ? setShowHistory(true) : setTab(t)} style={{
@@ -908,23 +802,21 @@ return (
         color: tab===t ? "#a78bfa" : "rgba(255,255,255,0.35)",
         cursor: "pointer", fontFamily: "'Cinzel Decorative', cursive", fontSize: 9, letterSpacing: 1,
       }}>
-        {t === "chores" ? "✨ Quests" : t === "wishlist" ? "🌟 Wishes" : "📜 History"}
+        {t === "chores" ? "Quests" : t === "wishlist" ? "Wishes" : "History"}
       </button>
     ))}
   </div>
 
   <div style={{ padding: "0 16px 60px", maxWidth: 500, margin: "0 auto", position: "relative", zIndex: 10 }}>
-
     {tab === "chores" && (
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {chores.length === 0 && <div style={{ textAlign: "center", padding: 50, color: "rgba(255,255,255,0.18)", fontStyle: "italic" }}>No quests yet — ask Dad! 🧚</div>}
+        {chores.length === 0 && <div style={{ textAlign: "center", padding: 50, color: "rgba(255,255,255,0.18)", fontStyle: "italic" }}>No quests yet -- ask Dad!</div>}
         {chores.map((chore, i) => (
           <div key={chore.id} style={{
             background: chore.done ? "rgba(167,139,250,0.06)" : "rgba(255,255,255,0.04)",
             border: chore.done ? "1px solid rgba(167,139,250,0.25)" : "1px solid rgba(255,255,255,0.08)",
             borderRadius: 20, padding: 16, opacity: chore.done ? 0.6 : 1,
-            animation: `fadeUp 0.4s ease ${i*0.07}s both`,
-            transition: "all 0.3s",
+            animation: `fadeUp 0.4s ease ${i*0.07}s both`, transition: "all 0.3s",
           }}>
             {chore.refPhoto && (
               <div style={{ marginBottom: 10 }}>
@@ -935,23 +827,22 @@ return (
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontFamily: "'Cinzel Decorative', cursive", fontSize: 13, color: chore.done ? "rgba(167,139,250,0.45)" : "#e0d0ff", textDecoration: chore.done ? "line-through" : "none", marginBottom: 4 }}>
-                  {chore.done ? "✓ " : "◇ "}{chore.name}
+                  {chore.name}
                 </div>
-                <div style={{ fontSize: 12, color: "#a78bfa", fontStyle: "italic" }}>worth ${chore.value?.toFixed(2)} 💜</div>
+                <div style={{ fontSize: 12, color: "#a78bfa", fontStyle: "italic" }}>worth ${chore.value?.toFixed(2)}</div>
               </div>
               {!chore.done && (
                 <button className="btn" onClick={() => { setActiveChore(chore); setPhotoPreview(null); }} style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "#a78bfa", padding: "7px 14px", borderRadius: 12, cursor: "pointer", fontFamily: "'Cinzel Decorative', cursive", fontSize: 9, flexShrink: 0, marginLeft: 10 }}>
-                  📷 Done!
+                  Done!
                 </button>
               )}
-              {chore.done && <div style={{ fontSize: 22 }}>✨</div>}
+              {chore.done && <div style={{ fontSize: 11, color: "#a78bfa", letterSpacing: 1 }}>DONE</div>}
             </div>
-
             {activeChore?.id === chore.id && !chore.done && (
               <div className="fade-in" style={{ marginTop: 14, borderTop: "1px solid rgba(167,139,250,0.15)", paddingTop: 14 }}>
                 {!photoPreview ? (
                   <label style={{ display: "block", textAlign: "center", padding: 22, border: "2px dashed rgba(167,139,250,0.25)", borderRadius: 14, cursor: "pointer", color: "rgba(255,255,255,0.35)", fontStyle: "italic", fontSize: 13 }}>
-                    🌟 Tap to take a photo
+                    Tap to take a photo
                     <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} style={{ display: "none" }} />
                   </label>
                 ) : (
@@ -959,9 +850,9 @@ return (
                     <img src={photoPreview} style={{ width: "100%", maxHeight: 160, objectFit: "cover", borderRadius: 12, marginBottom: 10 }} />
                     <div style={{ display: "flex", gap: 8 }}>
                       <button className="btn" onClick={submitChore} disabled={submitting === chore.id} style={{ flex: 1, background: "linear-gradient(135deg, #a78bfa, #e879f9)", border: "none", color: "#fff", padding: "12px", borderRadius: 12, cursor: "pointer", fontFamily: "'Cinzel Decorative', cursive", fontSize: 10 }}>
-                        {submitting === chore.id ? "✨ Sending..." : "✨ Submit to Dad"}
+                        {submitting === chore.id ? "Sending..." : "Submit to Dad"}
                       </button>
-                      <button onClick={() => { setPhotoPreview(null); setActiveChore(null); }} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.35)", padding: "12px 14px", borderRadius: 12, cursor: "pointer" }}>✕</button>
+                      <button onClick={() => { setPhotoPreview(null); setActiveChore(null); }} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.35)", padding: "12px 14px", borderRadius: 12, cursor: "pointer" }}>x</button>
                     </div>
                   </div>
                 )}
@@ -975,16 +866,15 @@ return (
     {tab === "wishlist" && (
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 20, padding: 18 }}>
-          <div style={{ fontFamily: "'Cinzel Decorative', cursive", fontSize: 11, color: "#a78bfa", marginBottom: 12 }}>🌟 Set Your Wish</div>
+          <div style={{ fontFamily: "'Cinzel Decorative', cursive", fontSize: 11, color: "#a78bfa", marginBottom: 12 }}>Set Your Wish</div>
           <div style={{ display: "flex", gap: 8 }}>
             <input placeholder="Paste Amazon link..." value={amazonUrl} onChange={e => setAmazonUrl(e.target.value)}
               style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(167,139,250,0.2)", color: "#fff", padding: "9px 13px", borderRadius: 12, fontSize: 13, outline: "none", minWidth: 0 }} />
             <button className="btn" onClick={handleAmazon} disabled={scraping} style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "#a78bfa", padding: "9px 14px", borderRadius: 12, cursor: "pointer", fontFamily: "'Cinzel Decorative', cursive", fontSize: 10, flexShrink: 0 }}>
-              {scraping ? "..." : "✨ Go"}
+              {scraping ? "..." : "Go"}
             </button>
           </div>
         </div>
-
         {wishlist && (
           <div className="scale-in" style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 24, padding: 24, textAlign: "center" }}>
             {wishlist.image && <img src={wishlist.image} style={{ width: 150, height: 150, objectFit: "contain", borderRadius: 16, background: "rgba(255,255,255,0.05)", marginBottom: 16 }} />}
@@ -995,9 +885,9 @@ return (
             </div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
               ${balance.toFixed(2)} of ${wishlist.price?.toFixed(2)} earned
-              {progress >= 1 && " 🎉 You did it!!"}
+              {progress >= 1 && " -- You did it!!"}
             </div>
-            {progress < 1 && <div style={{ fontSize: 12, color: "rgba(167,139,250,0.45)", fontStyle: "italic", marginTop: 6 }}>${Math.max(0, wishlist.price - balance).toFixed(2)} more to go ✨</div>}
+            {progress < 1 && <div style={{ fontSize: 12, color: "rgba(167,139,250,0.45)", fontStyle: "italic", marginTop: 6 }}>${Math.max(0, wishlist.price - balance).toFixed(2)} more to go</div>}
           </div>
         )}
       </div>
@@ -1009,7 +899,7 @@ return (
 );
 };
 
-// ── ALAN’S WORLD ───────────────────────────────────────────────────────────
+// – ALAN’S WORLD –
 const AlanWorld = ({ onLogout }) => {
 const [tab, setTab] = useState(“chores”);
 const [chores, setChores] = useState([]);
@@ -1076,13 +966,8 @@ return (
     </div>
   </div>
 
-  {/* Stats strip */}
   <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-    {[
-      { label: "To Do", val: pending },
-      { label: "Done", val: done },
-      { label: "Earned", val: `$${balance.toFixed(2)}` },
-    ].map((s, i) => (
+    {[{ label: "To Do", val: pending }, { label: "Done", val: done }, { label: "Earned", val: `$${balance.toFixed(2)}` }].map((s, i) => (
       <div key={i} style={{ flex: 1, textAlign: "center", padding: "10px 4px", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
         <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 18, color: "#e0e0e0" }}>{s.val}</div>
         <div style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginTop: 2 }}>{s.label.toUpperCase()}</div>
@@ -1091,20 +976,13 @@ return (
   </div>
 
   <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-    {[
-      { id: "chores", label: "Chores" },
-      { id: "reality", label: "Real Life" },
-      { id: "history", label: "History" },
-    ].map(t => (
+    {[{ id: "chores", label: "Chores" }, { id: "reality", label: "Real Life" }, { id: "history", label: "History" }].map(t => (
       <button key={t.id} className="btn" onClick={() => t.id === "history" ? setShowHistory(true) : setTab(t.id)} style={{
         padding: "13px 20px", background: "none", border: "none",
         color: tab===t.id ? "#fff" : "rgba(255,255,255,0.3)",
         borderBottom: tab===t.id ? "1px solid #fff" : "1px solid transparent",
-        cursor: "pointer", fontSize: 12, letterSpacing: 2, textTransform: "uppercase",
-        transition: "color 0.2s",
-      }}>
-        {t.label}
-      </button>
+        cursor: "pointer", fontSize: 12, letterSpacing: 2, textTransform: "uppercase", transition: "color 0.2s",
+      }}>{t.label}</button>
     ))}
   </div>
 
@@ -1131,12 +1009,9 @@ return (
               {chore.done ? (
                 <div style={{ fontSize: 11, color: "#34d399", letterSpacing: 1 }}>APPROVED</div>
               ) : (
-                <button className="btn" onClick={() => { setActiveChore(chore); setPhotoPreview(null); }} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)", padding: "7px 14px", borderRadius: 8, cursor: "pointer", fontSize: 11, letterSpacing: 1, flexShrink: 0 }}>
-                  SUBMIT
-                </button>
+                <button className="btn" onClick={() => { setActiveChore(chore); setPhotoPreview(null); }} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)", padding: "7px 14px", borderRadius: 8, cursor: "pointer", fontSize: 11, letterSpacing: 1, flexShrink: 0 }}>SUBMIT</button>
               )}
             </div>
-
             {activeChore?.id === chore.id && !chore.done && (
               <div className="fade-in" style={{ marginTop: 14, paddingLeft: 20 }}>
                 {!photoPreview ? (
@@ -1151,7 +1026,7 @@ return (
                       <button className="btn" onClick={submitChore} disabled={submitting === chore.id} style={{ flex: 1, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff", padding: "10px", borderRadius: 8, cursor: "pointer", fontSize: 12, letterSpacing: 1 }}>
                         {submitting === chore.id ? "SENDING..." : "SUBMIT"}
                       </button>
-                      <button onClick={() => { setPhotoPreview(null); setActiveChore(null); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.3)", padding: "10px 14px", borderRadius: 8, cursor: "pointer" }}>✕</button>
+                      <button onClick={() => { setPhotoPreview(null); setActiveChore(null); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.3)", padding: "10px 14px", borderRadius: 8, cursor: "pointer" }}>x</button>
                     </div>
                   </div>
                 )}
@@ -1167,7 +1042,7 @@ return (
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.25)", marginBottom: 8 }}>WHAT LIFE ACTUALLY COSTS</div>
           <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.8 }}>
-            This is what a month of adult life costs. Your chores cover a fraction of it — and that's the point.
+            This is what a month of adult life costs. Your chores cover a fraction of it -- and that's the point.
           </div>
         </div>
         {bills.length === 0 && <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 13, fontStyle: "italic" }}>Dad hasn't set up bills yet.</div>}
@@ -1211,7 +1086,7 @@ return (
 );
 };
 
-// ── APP ROOT ───────────────────────────────────────────────────────────────
+// – APP ROOT –
 export default function App() {
 const [user, setUser] = useState(null);
 const [pins, setPins] = useState(null);
