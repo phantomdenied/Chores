@@ -436,17 +436,31 @@ const DadDashboard = ({ onLogout, pins, setPins }) => {
   const [newPinStage, setNewPinStage] = useState(null);
   const [newPinFirst, setNewPinFirst] = useState("");
 
-  useEffect(() => {
-    const unsubs = [];
-    unsubs.push(onSnapshot(collection(db, "queue"), snap => setQueue(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-    ["alan","zelda"].forEach(kid => {
-      unsubs.push(onSnapshot(collection(db, `chores_${kid}`), snap =>
-        setChores(prev => ({ ...prev, [kid]: snap.docs.map(d => ({ id: d.id, ...d.data() })) }))));
-    });
-    unsubs.push(onSnapshot(collection(db, "bills"), snap => setBills(snap.docs.map(d => ({ id: d.id, ...d.data() })))));
-    unsubs.push(onSnapshot(doc(db, "balances", "main"), snap => { if (snap.exists()) setBalances(snap.data()); }));
-    return () => unsubs.forEach(u => u());
-  }, []);
+ useEffect(() => {
+  const unsubs = [];
+
+  unsubs.push(
+    onSnapshot(
+      collection(db, "queue"),
+      snap => setQueue(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    )
+  );
+
+  ["alan", "zelda"].forEach(kid => {
+    unsubs.push(
+      onSnapshot(
+        collection(db, `chores_${kid}`),
+        snap => {
+          // your existing code here
+        }
+      )
+    );
+  });
+
+  return () => {
+    unsubs.forEach(unsub => unsub && unsub());
+  };
+}, []);
 
   const approveItem = async (item) => {
     const newBal = { ...balances, [item.kid]: (balances[item.kid] || 0) + (item.value || 0) };
