@@ -4,7 +4,7 @@ import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, delet
 
 const CLOUDINARY_CLOUD = "dxxlptkzf";
 const CLOUDINARY_PRESET = "chore_app";
-const MASTER_PIN = "2323"; [cite_start]// Updated Master PIN[span_0](end_span)
+const MASTER_PIN = "2323"; // Updated Master PIN
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXvGhkfl3f3CXvsuuRiPUmK7J4GTsFan8",
@@ -18,7 +18,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
-// ── UTILS (Restored) ────────────────────────────────────────────────────────
+// ── UTILS (Restored Full Logic) ──────────────────────────────────────────
 const resizeImage = (dataUrl, maxW = 800) =>
   new Promise(res => {
     const img = new Image();
@@ -258,6 +258,7 @@ const DadDashboard = ({ onLogout, pins, setPins }) => {
   const [choreForm, setChoreForm] = useState({ kid: "zelda", name: "", value: "" });
   const [refPhotoPreview, setRefPhotoPreview] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [billForm, setBillForm] = useState({ name: "", amount: "" });
 
   useEffect(() => {
     const unsubs = [
@@ -287,10 +288,16 @@ const DadDashboard = ({ onLogout, pins, setPins }) => {
     setSaving(false);
   };
 
+  const addBill = async () => {
+    if (!billForm.name || !billForm.amount) return;
+    await addDoc(collection(db, "bills"), { name: billForm.name, amount: parseFloat(billForm.amount) });
+    setBillForm({ name: "", amount: "" });
+  };
+
   const inputStyle = { background: "#111", border: "1px solid #333", color: "#fff", padding: 12, borderRadius: 10, width: "100%" };
 
   return (
-    <div style={{ minHeight: "100vh", color: "#fff", padding: 20, background: "#0d1120" }}>
+    <div style={{ minHeight: "100vh", color: "#fff", padding: 20, background: "#0d1120", width: "100%", maxWidth: "100vw", overflowX: "hidden" }}>
       <GlobalStyles />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h2 className="shimmer-text">Dad's Dashboard</h2>
@@ -298,7 +305,7 @@ const DadDashboard = ({ onLogout, pins, setPins }) => {
       </div>
       
       <div style={{ display: "flex", gap: 10, marginBottom: 20, overflowX: "auto" }}>
-        {["queue", "chores", "bills"].map(t => (
+        {["queue", "chores", "bills", "pins"].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: 10, flex: 1, borderRadius: 8, background: tab === t ? "#c9a96e" : "#222", color: tab === t ? "#000" : "#fff", border: "none" }}>{t.toUpperCase()}</button>
         ))}
       </div>
@@ -324,16 +331,25 @@ const DadDashboard = ({ onLogout, pins, setPins }) => {
           <button onClick={addChore} disabled={saving} style={{ background: "#c9a96e", color: "#000", padding: 12, borderRadius: 10, border: "none" }}>{saving ? "Saving..." : "Add Chore"}</button>
         </div>
       )}
+
+      {tab === "bills" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <input placeholder="Bill Name" value={billForm.name} onChange={e => setBillForm({...billForm, name: e.target.value})} style={inputStyle} />
+          <input placeholder="Amount" type="number" value={billForm.amount} onChange={e => setBillForm({...billForm, amount: e.target.value})} style={inputStyle} />
+          <button onClick={addBill} style={{ background: "#c9a96e", color: "#000", padding: 12, borderRadius: 10, border: "none" }}>Add Bill</button>
+          {bills.map(b => <div key={b.id} style={{ display: "flex", justifyContent: "space-between", padding: 10, borderBottom: "1px solid #222" }}><span>{b.name}</span><span>${b.amount}</span></div>)}
+        </div>
+      )}
     </div>
   );
 };
 
-// ── KID DASHBOARD (Restored Full) ───────────────────────────────────────────
+// ── KID DASHBOARD (Restored Full Logic) ──────────────────────────────────────
 const KidDashboard = ({ kid, onLogout }) => {
   const [chores, setChores] = useState([]);
   const [balance, setBalance] = useState(0);
   const [bills, setBills] = useState([]);
-  const [isZelda] = useState(kid === "zelda");
+  const isZelda = kid === "zelda";
 
   useEffect(() => {
     const unsubs = [
@@ -348,7 +364,7 @@ const KidDashboard = ({ kid, onLogout }) => {
   const coveragePct = Math.min(1, balance / (totalBills || 1));
 
   return (
-    <div style={{ minHeight: "100vh", padding: 20, color: "#fff", background: isZelda ? "linear-gradient(#1a0533, #0a0a0a)" : "#0a0a0a" }}>
+    <div style={{ minHeight: "100vh", padding: 20, color: "#fff", background: isZelda ? "linear-gradient(#1a0533, #0a0a0a)" : "#0a0a0a", width: "100%", maxWidth: "100vw", overflowX: "hidden" }}>
       <GlobalStyles />
       <div style={{ textAlign: "center", padding: "40px 0" }}>
         <h1 className={isZelda ? "zelda-shimmer" : "shimmer-text"} style={{ fontSize: 48, margin: 0 }}>${balance.toFixed(2)}</h1>
