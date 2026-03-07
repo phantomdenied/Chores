@@ -4,7 +4,7 @@ import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, delet
 
 const CLOUDINARY_CLOUD = “dxxlptkzf”;
 const CLOUDINARY_PRESET = “chore_app”;
-const MASTER_PIN = “0000”;
+const MASTER_PIN = null; // Dad’s PIN (pins.dad) is the only master — set via PIN management
 
 const firebaseConfig = {
 apiKey: “AIzaSyCXvGhkfl3f3CXvsuuRiPUmK7J4GTsFan8”,
@@ -386,7 +386,7 @@ padding: “24px 16px”, fontFamily: “‘DM Sans’, sans-serif”, position:
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 2 }}>ENTER PIN</div>
           <SmartPinPad
             correctPin={pins[selected]}
-            masterPin={selected !== "dad" ? (pins.dad || MASTER_PIN) : undefined}
+            masterPin={selected !== "dad" ? pins.dad : undefined}
             accentColor={p.accent}
             onSuccess={handleLoginSuccess}
             onBack={() => setSelected(null)}
@@ -775,6 +775,9 @@ return (
                 <div style={{ fontSize: 12, color: pins[kid] ? "rgba(52,211,153,0.6)" : "rgba(255,255,255,0.25)", marginTop: 2 }}>
                   {pins[kid] ? "✓ PIN set" : "No PIN set yet"}
                 </div>
+                {kid === "dad" && (
+                  <div style={{ fontSize: 11, color: "rgba(200,160,80,0.5)", marginTop: 2 }}>Unlocks all accounts</div>
+                )}
               </div>
               <button className="btn" onClick={() => startPinReset(kid)} style={{ background: "rgba(200,160,80,0.1)", border: "1px solid rgba(200,160,80,0.25)", color: "#c9a96e", padding: "7px 14px", borderRadius: 9, cursor: "pointer", fontSize: 12 }}>
                 Reset PIN
