@@ -4,7 +4,7 @@ import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, delet
 
 const CLOUDINARY_CLOUD = "dxxlptkzf";
 const CLOUDINARY_PRESET = "chore_app";
-const MASTER_PIN = "2323"; // Updated Master PIN
+const MASTER_PIN = "2323"; [cite_start]// Updated Master PIN[span_0](end_span)
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXvGhkfl3f3CXvsuuRiPUmK7J4GTsFan8",
@@ -18,7 +18,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
-// ── UTILS ──────────────────────────────────────────────────────────────────
+// ── UTILS (Restored) ────────────────────────────────────────────────────────
 const resizeImage = (dataUrl, maxW = 800) =>
   new Promise(res => {
     const img = new Image();
@@ -79,7 +79,7 @@ const scrapeAmazon = async (inputUrl) => {
   return { title: title.slice(0, 80), price, image: img, url: resolvedUrl };
 };
 
-// ── GLOBAL STYLES ──────────────────────────────────────────────────────────
+// ── GLOBAL STYLES (Screen Fit Fixed) ─────────────────────────────────────────
 const GlobalStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&family=DM+Serif+Display&display=swap');
@@ -105,13 +105,20 @@ const GlobalStyles = () => (
     @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
     @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
     @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes sparkle { 0%,100%{opacity:0;transform:scale(0)} 50%{opacity:1;transform:scale(1)} }
-    @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
     
     .float { animation: float 4s ease-in-out infinite; }
     .fade-up { animation: fadeUp 0.4s ease forwards; }
+    .shake { animation: shake 0.4s ease; }
     .shimmer-text {
       background: linear-gradient(90deg, #c9a96e, #f0d080, #c9a96e);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+    }
+    .zelda-shimmer {
+      background: linear-gradient(90deg, #e879f9, #a78bfa, #67e8f9, #a78bfa, #e879f9);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -122,7 +129,7 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-// ── PIN PAD ────────────────────────────────────────────────────────────────
+// ── PIN PAD (Fast Input Fixed) ──────────────────────────────────────────────
 const SmartPinPad = ({ onSuccess, correctPin, onBack, accentColor, masterPin, setupMode, onFourDigits }) => {
   const [input, setInput] = useState("");
   const [shaking, setShaking] = useState(false);
@@ -149,7 +156,7 @@ const SmartPinPad = ({ onSuccess, correctPin, onBack, accentColor, masterPin, se
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
-      <div style={{ display: "flex", gap: 14 }}>
+      <div className={shaking ? "shake" : ""} style={{ display: "flex", gap: 14 }}>
         {[0,1,2,3].map(i => (
           <div key={i} style={{
             width: 13, height: 13, borderRadius: "50%",
@@ -161,10 +168,7 @@ const SmartPinPad = ({ onSuccess, correctPin, onBack, accentColor, masterPin, se
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
         {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d, i) => (
           <button key={i} className="btn"
-            onPointerDown={(e) => {
-              e.preventDefault(); 
-              d === "⌫" ? setInput(p => p.slice(0,-1)) : d !== "" && press(String(d))
-            }}
+            onPointerDown={(e) => { e.preventDefault(); d === "⌫" ? setInput(p => p.slice(0,-1)) : d !== "" && press(String(d)) }}
             style={{
               width: 62, height: 62, borderRadius: 14,
               background: d === "" ? "transparent" : "rgba(255,255,255,0.07)",
@@ -209,7 +213,7 @@ const LoginScreen = ({ onLogin, pins, setPins }) => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", width: "100%", maxWidth: "100vw", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20, boxSizing: "border-box" }}>
+    <div style={{ minHeight: "100vh", width: "100%", maxWidth: "100vw", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20, boxSizing: "border-box", background: "radial-gradient(ellipse at 20% 50%, #1a0533 0%, #0a0a0a 50%, #0d1a0d 100%)" }}>
       <GlobalStyles />
       {!selected ? (
         <div className="fade-up" style={{ width: "100%", maxWidth: 400 }}>
@@ -226,7 +230,7 @@ const LoginScreen = ({ onLogin, pins, setPins }) => {
           </div>
         </div>
       ) : (
-        <div className="fade-up" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+        <div className="fade-up" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, background: "rgba(255,255,255,0.03)", padding: 30, borderRadius: 24, border: `1px solid ${p.border}` }}>
           <div style={{ fontSize: 44 }}>{p.emoji}</div>
           <div style={{ fontFamily: p.font, fontSize: 22, color: p.accent }}>{p.name}</div>
           <SmartPinPad
@@ -244,19 +248,22 @@ const LoginScreen = ({ onLogin, pins, setPins }) => {
   );
 };
 
-// ── DAD DASHBOARD ──────────────────────────────────────────────────────────
+// ── DAD DASHBOARD (Restored Full) ───────────────────────────────────────────
 const DadDashboard = ({ onLogout, pins, setPins }) => {
   const [tab, setTab] = useState("queue");
   const [queue, setQueue] = useState([]);
   const [chores, setChores] = useState({ alan: [], zelda: [] });
   const [balances, setBalances] = useState({ alan: 0, zelda: 0 });
+  const [bills, setBills] = useState([]);
   const [choreForm, setChoreForm] = useState({ kid: "zelda", name: "", value: "" });
+  const [refPhotoPreview, setRefPhotoPreview] = useState(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const unsubs = [
       onSnapshot(collection(db, "queue"), s => setQueue(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       onSnapshot(doc(db, "balances", "main"), s => s.exists() && setBalances(s.data())),
+      onSnapshot(collection(db, "bills"), s => setBills(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       ...["alan", "zelda"].map(k => onSnapshot(collection(db, `chores_${k}`), s => setChores(prev => ({ ...prev, [k]: s.docs.map(d => ({ id: d.id, ...d.data() })) }))))
     ];
     return () => unsubs.forEach(u => u());
@@ -272,76 +279,105 @@ const DadDashboard = ({ onLogout, pins, setPins }) => {
   const addChore = async () => {
     if (!choreForm.name || !choreForm.value) return;
     setSaving(true);
-    await addDoc(collection(db, `chores_${choreForm.kid}`), { name: choreForm.name, value: parseFloat(choreForm.value), done: false, createdAt: Date.now() });
+    let refUrl = null;
+    if (refPhotoPreview) refUrl = await uploadPhoto(refPhotoPreview);
+    await addDoc(collection(db, `chores_${choreForm.kid}`), { name: choreForm.name, value: parseFloat(choreForm.value), refPhoto: refUrl, done: false, createdAt: Date.now() });
     setChoreForm({ ...choreForm, name: "", value: "" });
+    setRefPhotoPreview(null);
     setSaving(false);
   };
 
+  const inputStyle = { background: "#111", border: "1px solid #333", color: "#fff", padding: 12, borderRadius: 10, width: "100%" };
+
   return (
-    <div style={{ minHeight: "100vh", color: "#fff", padding: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+    <div style={{ minHeight: "100vh", color: "#fff", padding: 20, background: "#0d1120" }}>
+      <GlobalStyles />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h2 className="shimmer-text">Dad's Dashboard</h2>
-        <button onClick={onLogout} style={{ background: "none", border: "1px solid #444", color: "#888", borderRadius: 8, padding: "4px 10px" }}>Logout</button>
+        <button className="btn" onClick={onLogout} style={{ padding: "8px 16px", background: "#222", border: "1px solid #444", color: "#888", borderRadius: 8 }}>Logout</button>
       </div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-        {["queue", "chores"].map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{ padding: 10, background: tab === t ? "#c9a96e" : "#222", color: tab === t ? "#000" : "#fff", border: "none", borderRadius: 8, flex: 1 }}>{t.toUpperCase()}</button>
+      
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, overflowX: "auto" }}>
+        {["queue", "chores", "bills"].map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{ padding: 10, flex: 1, borderRadius: 8, background: tab === t ? "#c9a96e" : "#222", color: tab === t ? "#000" : "#fff", border: "none" }}>{t.toUpperCase()}</button>
         ))}
       </div>
-      {tab === "queue" ? (
-        queue.map(item => (
-          <div key={item.id} style={{ background: "#111", padding: 15, borderRadius: 12, marginBottom: 10, border: "1px solid #333" }}>
-            <p>{item.kid.toUpperCase()}: {item.choreName} - ${item.value}</p>
-            <button onClick={() => approveItem(item)} style={{ background: "#34d399", color: "#000", border: "none", padding: 10, borderRadius: 8, marginTop: 10, width: "100%" }}>Approve</button>
+
+      {tab === "queue" && queue.map(item => (
+        <div key={item.id} style={{ background: "#111", padding: 15, borderRadius: 12, marginBottom: 10, border: "1px solid #333" }}>
+          <p>{item.kid.toUpperCase()}: {item.choreName} - ${item.value}</p>
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            <button onClick={() => approveItem(item)} style={{ flex: 1, background: "#34d399", color: "#000", border: "none", padding: 10, borderRadius: 8 }}>Approve</button>
+            <button onClick={() => deleteDoc(doc(db, "queue", item.id))} style={{ flex: 1, background: "#ef4444", color: "#fff", border: "none", padding: 10, borderRadius: 8 }}>Reject</button>
           </div>
-        ))
-      ) : (
+        </div>
+      ))}
+
+      {tab === "chores" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <select value={choreForm.kid} onChange={e => setChoreForm({...choreForm, kid: e.target.value})} style={{ padding: 10, borderRadius: 8, background: "#111", color: "#fff" }}>
+          <select value={choreForm.kid} onChange={e => setChoreForm({...choreForm, kid: e.target.value})} style={inputStyle}>
             <option value="zelda">Zelda</option>
             <option value="alan">Alan</option>
           </select>
-          <input placeholder="Chore Name" value={choreForm.name} onChange={e => setChoreForm({...choreForm, name: e.target.value})} style={{ padding: 10, borderRadius: 8, background: "#111", color: "#fff", border: "1px solid #333" }} />
-          <input placeholder="Value" type="number" value={choreForm.value} onChange={e => setChoreForm({...choreForm, value: e.target.value})} style={{ padding: 10, borderRadius: 8, background: "#111", color: "#fff", border: "1px solid #333" }} />
-          <button onClick={addChore} style={{ background: "#c9a96e", padding: 10, borderRadius: 8 }}>Add Chore</button>
+          <input placeholder="Chore Name" value={choreForm.name} onChange={e => setChoreForm({...choreForm, name: e.target.value})} style={inputStyle} />
+          <input placeholder="Value" type="number" value={choreForm.value} onChange={e => setChoreForm({...choreForm, value: e.target.value})} style={inputStyle} />
+          <button onClick={addChore} disabled={saving} style={{ background: "#c9a96e", color: "#000", padding: 12, borderRadius: 10, border: "none" }}>{saving ? "Saving..." : "Add Chore"}</button>
         </div>
       )}
     </div>
   );
 };
 
-// ── KID DASHBOARD ──────────────────────────────────────────────────────────
+// ── KID DASHBOARD (Restored Full) ───────────────────────────────────────────
 const KidDashboard = ({ kid, onLogout }) => {
   const [chores, setChores] = useState([]);
   const [balance, setBalance] = useState(0);
+  const [bills, setBills] = useState([]);
+  const [isZelda] = useState(kid === "zelda");
 
   useEffect(() => {
-    const unsubChores = onSnapshot(collection(db, `chores_${kid}`), s => setChores(s.docs.map(d => ({ id: d.id, ...d.data() }))));
-    const unsubBal = onSnapshot(doc(db, "balances", "main"), s => s.exists() && setBalance(s.data()[kid] || 0));
-    return () => { unsubChores(); unsubBal(); };
+    const unsubs = [
+      onSnapshot(collection(db, `chores_${kid}`), s => setChores(s.docs.map(d => ({ id: d.id, ...d.data() })))),
+      onSnapshot(doc(db, "balances", "main"), s => s.exists() && setBalance(s.data()[kid] || 0)),
+      onSnapshot(collection(db, "bills"), s => setBills(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+    ];
+    return () => unsubs.forEach(u => u());
   }, [kid]);
 
-  const submitChore = async (chore) => {
-    await addDoc(collection(db, "queue"), { kid, choreId: chore.id, choreName: chore.name, value: chore.value, submittedAt: Date.now() });
-    alert("Submitted for approval!");
-  };
+  const totalBills = bills.reduce((s, b) => s + b.amount, 0);
+  const coveragePct = Math.min(1, balance / (totalBills || 1));
 
   return (
-    <div style={{ minHeight: "100vh", color: "#fff", padding: 20 }}>
-      <div style={{ textAlign: "center", marginBottom: 30 }}>
-        <h1 style={{ fontSize: 40 }}>${balance.toFixed(2)}</h1>
-        <p style={{ color: "#888" }}>Current Balance</p>
+    <div style={{ minHeight: "100vh", padding: 20, color: "#fff", background: isZelda ? "linear-gradient(#1a0533, #0a0a0a)" : "#0a0a0a" }}>
+      <GlobalStyles />
+      <div style={{ textAlign: "center", padding: "40px 0" }}>
+        <h1 className={isZelda ? "zelda-shimmer" : "shimmer-text"} style={{ fontSize: 48, margin: 0 }}>${balance.toFixed(2)}</h1>
+        <p style={{ color: "rgba(255,255,255,0.4)", letterSpacing: 2 }}>CURRENT BALANCE</p>
       </div>
-      {chores.filter(c => !c.done).map(c => (
-        <div key={c.id} style={{ background: "#111", padding: 15, borderRadius: 12, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div>{c.name}</div>
-            <div style={{ color: "#34d399" }}>${c.value}</div>
-          </div>
-          <button onClick={() => submitChore(c)} style={{ background: "#222", border: "1px solid #444", color: "#fff", padding: "8px 15px", borderRadius: 8 }}>Finish</button>
+
+      <div style={{ background: "rgba(255,255,255,0.03)", padding: 20, borderRadius: 20, marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 12 }}>
+          <span>Monthly Progress</span>
+          <span>{Math.round(coveragePct * 100)}%</span>
         </div>
-      ))}
-      <button onClick={onLogout} style={{ width: "100%", marginTop: 20, padding: 10, background: "none", border: "1px solid #333", color: "#555", borderRadius: 8 }}>Logout</button>
+        <div style={{ height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 99, overflow: "hidden" }}>
+          <div style={{ width: `${coveragePct * 100}%`, height: "100%", background: isZelda ? "#a78bfa" : "#34d399", transition: "width 0.5s" }} />
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {chores.filter(c => !c.done).map(c => (
+          <div key={c.id} style={{ background: "rgba(255,255,255,0.05)", padding: 16, borderRadius: 16, display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: "500" }}>{c.name}</div>
+              <div style={{ color: isZelda ? "#a78bfa" : "#34d399", fontSize: 14 }}>+${c.value.toFixed(2)}</div>
+            </div>
+            <button className="btn" onClick={() => addDoc(collection(db, "queue"), { kid, choreId: c.id, choreName: c.name, value: c.value, submittedAt: Date.now() })} style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.1)", color: "#fff", border: "none" }}>Done</button>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={onLogout} style={{ width: "100%", marginTop: 40, padding: 12, background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.3)", borderRadius: 12 }}>Logout</button>
     </div>
   );
 };
